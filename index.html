@@ -503,8 +503,9 @@ function getSystemPrompt(slideCount) {
     logoInstruction = `
 LOGO:
 - Include the company logo on the cover slide (centered, ~80-120px height) and as a small footer logo (22px height, bottom-left, opacity 0.5) on every other slide.
-- Use this exact src for all <img> logo tags: ${logoDataURI}
-- The logo is an <img> tag, NOT an SVG inline.`;
+- For ALL logo <img> tags, use exactly this src value: __LOGO_SRC__
+- The logo is an <img> tag, NOT an SVG inline.
+- Do NOT invent or generate any base64 data. Use __LOGO_SRC__ literally.`;
   }
 
   return `You are a presentation designer. Generate a complete, self-contained HTML file with exactly ${slideCount} slides.
@@ -585,6 +586,11 @@ async function generate() {
 
     const data = await resp.json();
     generatedHTML = data.content[0].text;
+
+    // Replace logo placeholder with actual data URI
+    if (logoDataURI) {
+      generatedHTML = generatedHTML.replaceAll('__LOGO_SRC__', logoDataURI);
+    }
 
     // Show token usage
     const usage = data.usage;
