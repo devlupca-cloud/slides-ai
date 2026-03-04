@@ -286,26 +286,6 @@
     width: 80px;
   }
 
-  /* ── API key input ── */
-  .api-key-bar {
-    padding: 12px 20px;
-    border-bottom: 1px solid #1a1a1a;
-  }
-  .api-key-bar input {
-    width: 100%;
-    background: #111;
-    border: 1px solid #222;
-    border-radius: 6px;
-    color: #ccc;
-    padding: 8px 12px;
-    font-size: 12px;
-    font-family: monospace;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .api-key-bar input:focus { border-color: #d76b2a; }
-  .api-key-bar input::placeholder { color: #444; }
-
   /* ── Branding section ── */
   .branding-section {
     padding: 12px 20px;
@@ -405,10 +385,6 @@
 <div class="main">
   <!-- Left: prompt -->
   <div class="prompt-panel">
-    <div class="api-key-bar">
-      <input type="password" id="apiKey" placeholder="sk-ant-... (sua API key Anthropic)" />
-    </div>
-
     <div class="branding-section">
       <h3>Marca</h3>
       <div class="logo-upload">
@@ -509,12 +485,6 @@ function clearLogo() {
   document.getElementById('logoInput').value = '';
 }
 
-// Persist API key
-const apiKeyInput = document.getElementById('apiKey');
-apiKeyInput.value = localStorage.getItem('slides-ai-key') || '';
-apiKeyInput.addEventListener('change', () => {
-  localStorage.setItem('slides-ai-key', apiKeyInput.value);
-});
 
 function getSystemPrompt(slideCount) {
   const accent = document.getElementById('colorPrimary').value;
@@ -537,7 +507,7 @@ LOGO:
 - The logo is an <img> tag, NOT an SVG inline.`;
   }
 
-  return \`You are a presentation designer. Generate a complete, self-contained HTML file with exactly \${slideCount} slides.
+  return `You are a presentation designer. Generate a complete, self-contained HTML file with exactly ${slideCount} slides.
 
 REQUIREMENTS:
 - Each slide is a <div class="slide"> with exactly 960x540px
@@ -546,16 +516,16 @@ REQUIREMENTS:
 - Use clean, professional typography
 - Keep text concise — bullet points, not paragraphs
 - Include slide numbers
-\${logoInstruction}
+${logoInstruction}
 
 THEME:
-- Background: \${bg}
-- Text: \${text}
-- Accent/Primary: \${accent}
-- Secondary accent: \${accent2}
-- Muted text: \${muted}
-- Card/highlight bg: \${cardBg}
-- Cover & closing background: \${bg}
+- Background: ${bg}
+- Text: ${text}
+- Accent/Primary: ${accent}
+- Secondary accent: ${accent2}
+- Muted text: ${muted}
+- Card/highlight bg: ${cardBg}
+- Cover & closing background: ${bg}
 - Use a subtle gradient line (accent to accent2) at the top of each slide (5px height)
 
 STRUCTURE — Return ONLY the HTML inside <body>, no <html>, <head>, or <style> in a separate block.
@@ -574,7 +544,7 @@ The CSS must include:
   font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
-Do NOT include any script tags. Return ONLY the HTML.\`;
+Do NOT include any script tags. Return ONLY the HTML.`;
 }
 
 function lighten(hex, percent) {
@@ -585,10 +555,6 @@ function lighten(hex, percent) {
 }
 
 async function generate() {
-  const key = apiKeyInput.value.trim();
-  if (!key) { apiKeyInput.focus(); apiKeyInput.style.borderColor = '#e53e3e'; return; }
-  apiKeyInput.style.borderColor = '#222';
-
   const prompt = document.getElementById('prompt').value.trim();
   if (!prompt) return;
 
@@ -602,19 +568,13 @@ async function generate() {
   document.getElementById('emptyState').style.display = 'none';
 
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    const resp = await fetch('/api/generate', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 8000,
         system: getSystemPrompt(slideCount),
-        messages: [{ role: 'user', content: prompt }]
+        prompt: prompt,
+        max_tokens: 8000
       })
     });
 
